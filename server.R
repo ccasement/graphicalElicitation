@@ -185,8 +185,8 @@ shinyServer(function(input, output){
 		# bernoulli case
 		if(input$data_model == "Bernoulli"){
 
-			logit_l <- logistic(selected) - bag$w * prod(bag$multiplier) / 2
-			logit_u <- logistic(selected) + bag$w * prod(bag$multiplier) / 2
+			logit_l <- logistic(selected) - bag$w * bag$multiplier^bag$counter / 2
+			logit_u <- logistic(selected) + bag$w * bag$multiplier^bag$counter / 2
 			param_l <- expit(logit_l)
 			param_u <- expit(logit_u)
 			bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
@@ -568,7 +568,8 @@ shinyServer(function(input, output){
 				color = "red", size = 0.7)) +
 			geom_line(data = bag$store_all_selected, aes(x = step, y = selected_param, 
 				color = "red", size = 0.6)) +
-			scale_x_continuous(limits = c(0, bag$counter), breaks = seq(0, bag$counter, by = 5)) +
+			scale_x_continuous(limits = c(0, bag$counter), breaks = seq(0, bag$counter, 
+			  by = 5)) +
 			xlab("Selection Number") +
 			theme(plot.title = element_text(size = 16, hjust = 0), 
 				axis.title.x = element_text(margin = margin(15, 0, 0, 0)), 
