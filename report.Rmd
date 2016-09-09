@@ -1,0 +1,105 @@
+---
+title: "Prior Elicitation Results"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include = FALSE} 
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 3, 
+	comment = "")
+```
+
+
+
+
+<!--- user inputs -->
+## User Inputs
+```{r}
+inputs <- data.frame(
+	"." = c(input$data_model, bag$n),
+  row.names = c("Data Model", "Observations  ")
+)
+
+cat(capture.output(inputs)[-1], sep = "\n")
+invisible(inputs)
+```
+
+
+
+
+<!--- elicited prior information -->
+## Elicited Prior
+
+### Family
+```{r}
+cat(bag$prior_fam, sep = "\n")
+```
+
+
+### Parameters
+```{r}
+cat(capture.output(bag$hyper_params)[-1], sep = "\n")
+invisible(bag$hyper_params)
+```
+
+
+### Plot
+```{r}
+bag$p_plot + 
+	theme(
+		plot.title = element_text(size = 11),
+		axis.title = element_text(size = 11), 
+		axis.text = element_text(size = 10)
+	)
+```
+
+
+### Summaries
+```{r}
+cat(capture.output(bag$summaries)[-1], sep = "\n")
+invisible(bag$summaries)
+```
+
+
+
+
+<!--- number of selections and history plot -->
+## Other
+
+### Number of Selections
+```{r}
+cat(capture.output(bag$n_selections)[-1], sep = "\n")
+invisible(bag$n_selections)
+```
+
+
+### History Plot
+```{r}
+h_plot <- ggplot() +
+	geom_point(data = bag$store_mesh, aes(x = step, y = intervals )) +
+	geom_point(data = bag$store_all_selected, aes(x = step, y = selected_param, 
+		color = "red")) +
+	geom_line(data = bag$store_all_selected, aes(x = step, y = selected_param, 
+		color = "red")) +
+	scale_x_continuous(limits = c(0, bag$counter), breaks = seq(0, bag$counter, 
+		by = 10)) +
+  xlab("Selection Number") + 
+	theme(plot.title = element_text(size = 10, hjust = 0), 
+		axis.title.x = element_text(size = 10, margin = margin(15, 0, 0, 0)), 
+    axis.title.y = element_text(size = 10, margin = margin(0, 10, 0, 0)),
+		axis.text = element_text(size = 10), 
+		legend.position = "none")
+
+if(input$data_model == "Bernoulli"){
+	h_plot <- h_plot + ylab("p") + 
+		ggtitle("Red:    Selected proportion\nBlack:  Unselected proportion")
+} else {
+		h_plot <- h_plot + ylab(expression(lambda)) + 
+			ggtitle("Red:    Selected rate\nBlack:  Unselected rate")
+}
+
+return(h_plot)
+```
+
+
+
