@@ -5,8 +5,7 @@ output: pdf_document
 ---
 
 ```{r setup, include = FALSE} 
-knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 3, 
-	comment = "")
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 3, comment = "")
 ```
 
 
@@ -15,11 +14,16 @@ knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 3,
 <!--- user inputs -->
 ## User Inputs
 ```{r}
-inputs <- data.frame(
-	"." = c(input$data_model, bag$n),
-  row.names = c("Data Model", "Observations  ")
-)
-
+if(input$data_model == "Bernoulli" || input$data_model == "Poisson"){
+	inputs <- data.frame("." = c(input$data_model, input$n),
+	                     row.names = c("Data Model", "Observations  ")
+	)
+}
+if(input$data_model == "Normal (known variance)"){
+	inputs <- data.frame("." = c(input$data_model, input$n, input$pop_sd),
+	                     row.names = c("Data Model", "Observations", "Population Std. Dev.")
+	)
+}
 cat(capture.output(inputs)[-1], sep = "\n")
 invisible(inputs)
 ```
@@ -93,9 +97,16 @@ h_plot <- ggplot() +
 if(input$data_model == "Bernoulli"){
 	h_plot <- h_plot + ylab("p") + 
 		ggtitle("Red:    Selected proportion\nBlack:  Unselected proportion")
-} else {
-		h_plot <- h_plot + ylab(expression(lambda)) + 
-			ggtitle("Red:    Selected rate\nBlack:  Unselected rate")
+}
+
+if(input$data_model == "Poisson"){
+	h_plot <- h_plot + ylab(expression(lambda)) + 
+		ggtitle("Red:    Selected rate\nBlack:  Unselected rate")
+}
+
+if(input$data_model == "Normal (known variance)"){
+  h_plot <- h_plot + ylab(expression(mu)) + 
+  	ggtitle("Red:    Selected mean\nBlack:  Unselected mean")
 }
 
 return(h_plot)
