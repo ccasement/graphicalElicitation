@@ -396,7 +396,7 @@ shinyServer(function(input, output, session){
 	  
 	  # set previous sample size to be used in prior computation
 	  bag$n <- input$n
-	  updateSliderInput(session, "new_n", value = bag$n)
+	  updateNumericInput(session, "new_n", value = bag$n)
 	  
 	  # set prior distribution
 	  bag$prior_density <- dbeta
@@ -424,7 +424,7 @@ shinyServer(function(input, output, session){
 	# initial process for poisson case
 	observeEvent(input$set_non_bern_inputs, {
 	  
-	  if(input$data_model == "Poisson") {
+	  if (input$data_model == "Poisson") {
   	  # set initial parameter mesh
   	  low_init <- smallest_lambda(input$min_init)
   	  high_init <- biggest_lambda(input$max_init)
@@ -440,6 +440,10 @@ shinyServer(function(input, output, session){
   	  total_selections <- log(tol/bag$w_param) / log(bag$multiplier)
   	  bag$total_selections <- round_any(total_selections, 5, f = ceiling)
   	  bag$warmup <- bag$total_selections - 5
+  	  
+  	  # set previous sample size to be used in prior computation
+  	  bag$n <- input$n
+  	  updateNumericInput(session, "new_n", value = bag$n)
   	  
   	  # set prior distribution
   	  bag$prior_density <- dgamma
@@ -468,6 +472,10 @@ shinyServer(function(input, output, session){
 	    total_selections <- log(tol/bag$w_param) / log(bag$multiplier)
 	    bag$total_selections <- round_any(total_selections, 5, f = ceiling)
 	    bag$warmup <- bag$total_selections - 5
+	    
+	    # set previous sample size to be used in prior computation
+	    bag$n <- input$n
+	    updateNumericInput(session, "new_n", value = bag$n)
 	    
 	    # set prior distribution
 	    bag$prior_density <- dnorm
@@ -510,6 +518,10 @@ shinyServer(function(input, output, session){
 	    bag$total_selections <- 2 * round_any(n_selections, 5, f = ceiling)
 	    bag$warmup <- bag$total_selections / 2 - 5
 	    
+	    # set previous sample size to be used in prior computation
+	    bag$n <- input$n
+	    updateNumericInput(session, "new_normal_n", value = bag$n)
+	    
 	    # set prior distribution
 	    bag$prior_density_normal_mean <- dnorm
 	    bag$prior_density_normal_var <- dinvgamma
@@ -525,7 +537,7 @@ shinyServer(function(input, output, session){
 	 
 	  # set previous sample size to be used in prior computation
 	  bag$n <- input$n
-	  updateSliderInput(session, "new_n", value = bag$n)
+	  updateNumericInput(session, "new_n", value = bag$n)
 	  
 	  # combine datasets and store in bag
 	  bag$datasets <- do.call(rbind, list_of_datasets)
@@ -630,7 +642,9 @@ shinyServer(function(input, output, session){
         bag$selected_keep <- bag$store_all_selected
         
       } else {
-        bag$selected_keep <- bag$store_all_selected[-(1:bag$warmup), ]    # remove warm-up
+        
+        # remove warm-up
+        bag$selected_keep <- bag$store_all_selected[-(1:bag$warmup), ]
       }
     
       if (input$data_model == "Bernoulli") {
@@ -645,8 +659,8 @@ shinyServer(function(input, output, session){
       
       } else if (input$data_model == "Normal (known variance)") {
       
-        bag$th_hat1 <- mean(bag$selected_keep$selected_param)       # mu
-        bag$th_hat2 <- (input$pop_sd)^2 / bag$n                   # sigma squared
+        bag$th_hat1 <- mean(bag$selected_keep$selected_param)  # mu
+        bag$th_hat2 <- (input$pop_sd)^2 / bag$n                # sigma^2
       }
       
     } else {
@@ -667,7 +681,6 @@ shinyServer(function(input, output, session){
       # beta
       bag$th_hat2_var <- 0.5 * mean(bag$selected_keep_normal_var$selected_param) * 
                            (bag$n + 3)
-      
       # mu_0
       bag$th_hat1_mean <- mean(bag$selected_keep_normal_mean$selected_param)
       # (sigma^2)* = (mode of IG prior on variance) / lambda
@@ -676,42 +689,48 @@ shinyServer(function(input, output, session){
   }
 
   
-  # fit prior for all cases other than normal (unknown var)
+  # print hyperparameters for all cases except normal (unknown var)
+  print_hypers <- function(){
+    
+    if (input$data_model == "Bernoulli" || input$data_model == "Poisson") {
+      bag$hyper_params <<- data.frame(
+        "." = round(c(bag$th_hat1, bag$th_hat2), 3),
+        row.names = c("Alpha  ", "Beta")
+      )
+      
+    } else if (input$data_model == "Normal (known variance)") {
+      bag$hyper_params <<- data.frame(
+        "." = round(c(bag$th_hat1, bag$th_hat2), 3),
+        row.names = c("Mu0", "Sigma0^2  ")
+      )
+    }
+    
+    cat(capture.output(bag$hyper_params)[-1], sep = "\n")
+    invisible(bag$hyper_params)
+  }
+  
+  
   output$prior_params <- renderPrint({
     
-  	compute_hypers()
-    
-    # change ESS if user selects option
-    if (input$change_n) bag$n <- input$new_n
-
-  	if (input$data_model == "Bernoulli" || input$data_model == "Poisson") {
-  	  bag$hyper_params <<- data.frame(
-			  "." = round(c(bag$th_hat1, bag$th_hat2), 3),
-	  		row.names = c("Alpha  ", "Beta")
-	  	)
-  	  
-  	} else if (input$data_model == "Normal (known variance)") {
-  	  bag$hyper_params <<- data.frame(
-  	    "." = round(c(bag$th_hat1, bag$th_hat2), 3),
-  	    row.names = c("Mu", "Sigma^2  ")
-  	  )
-  	}
-
-  	cat(capture.output(bag$hyper_params)[-1], sep = "\n")
-	  invisible(bag$hyper_params)
+    compute_hypers()
+    print_hypers()
 	})
-
   
-  # fit joint prior for the normal (unknown var) case
- 	output$prior_params_joint <- renderPrint({
+  
+  # change ESS if user selects option
+  observeEvent(input$change_ess, {
+    
+    bag$n <- input$new_n
+    compute_hypers()
+    output$prior_params <- renderPrint( print_hypers() )
+  })
+
+
+ 	# print hyperparameters for normal (unknown var) case
+ 	print_normal_hypers_joint <- function(){  
  	  
- 		compute_hypers()
- 	  
- 	  # change ESS if user selects option
- 	  if (input$change_normal_n) bag$n <- input$new_normal_n
- 		
   	if (input$data_model == "Normal (unknown variance)") {
-			bag$hyper_params_joint <<- data.frame(                           # maybe add joint ESS option here
+			bag$hyper_params_joint <<- data.frame(
 				"." = round(c(bag$th_hat1_mean, bag$n, bag$th_hat1_var, bag$th_hat2_var), 3),
 				row.names = c("Mu0", "Lambda  ", "Alpha", "Beta")
 			)
@@ -719,34 +738,56 @@ shinyServer(function(input, output, session){
 			
   	cat(capture.output(bag$hyper_params_joint)[-1], sep = "\n")
 	  invisible(bag$hyper_params_joint)
- 	})
-  
+ 	}
+ 	
+ 	print_normal_hypers_mean <- function(){  
+ 	  
+ 	  if (input$data_model == "Normal (unknown variance)") {
+ 	    bag$hyper_params_mean <<- data.frame(
+ 	      "." = round(c(bag$th_hat1_mean, bag$th_hat2_mean), 3),
+ 	      row.names = c("Mu0", "(Sigma^2)*/Lambda  ")
+ 	    )
+ 	  }
+ 	  
+ 	  cat(capture.output(bag$hyper_params_mean)[-1], sep = "\n")
+ 	  invisible(bag$hyper_params_joint)
+ 	}
+ 	
+ 	print_normal_hypers_var <- function(){  
+ 	  
+ 	  if (input$data_model == "Normal (unknown variance)") {
+ 	    bag$hyper_params_var <<- data.frame(
+ 	      "." = round(c(bag$th_hat1_var, bag$th_hat2_var), 3),
+ 	      row.names = c("Alpha  ", "Beta")
+ 	    )
+ 	  }
+ 	  
+ 	  cat(capture.output(bag$hyper_params_var)[-1], sep = "\n")
+ 	  invisible(bag$hyper_params_joint)
+ 	}
+
+
 	# fit prior for the normal (unknown var) mean
-  output$prior_params_mean <- renderPrint({
+  output$prior_params_joint <- renderPrint({
   	
-  	if (input$data_model == "Normal (unknown variance)") {
-			bag$hyper_params_mean <<- data.frame(
-				"." = round(c(bag$th_hat1_mean, bag$th_hat2_mean), 3),
-				row.names = c("Mu0", "(Sigma^2)*/Lambda  ")
-			)
-  	}
-			
-  	cat(capture.output(bag$hyper_params_mean)[-1], sep = "\n")
-	  invisible(bag$hyper_params_mean)
+    compute_hypers()
+    print_normal_hypers_joint()
   })
   
-  # fit prior for the normal (unknown var) variance
-  output$prior_params_var <- renderPrint({
-  	
-  	if (input$data_model == "Normal (unknown variance)") {
-			bag$hyper_params_var <<- data.frame(
-				"." = round(c(bag$th_hat1_var, bag$th_hat2_var), 3),
-				row.names = c("Alpha  ", "Beta")
-			)
-  	}
-
-  	cat(capture.output(bag$hyper_params_var)[-1], sep = "\n")
-	  invisible(bag$hyper_params_var)
+  output$prior_params_mean <- renderPrint( print_normal_hypers_mean() )
+  output$prior_params_var <- renderPrint( print_normal_hypers_var() )
+  
+  # change normal (unknown var) ESS if user selects option
+  observeEvent(input$change_normal_ess, {
+    
+    bag$n <- input$new_normal_n
+    compute_hypers()
+    output$prior_params_normal <- renderPrint({
+      
+      print_normal_hypers_joint()
+      print_normal_hypers_mean()
+      print_normal_hypers_var()
+    })
   })
   
   
@@ -914,25 +955,33 @@ shinyServer(function(input, output, session){
       p_plot <- p_plot + beta_density + xlab("p") + xlim(c(0, 1))
     
     } else if (input$data_model == "Poisson") {
+      
+      # set x-axis limits based on widest possible prior (n = 10)
+      alpha_plot <- 10 * mean(bag$selected_keep$selected_param) + 1
+      beta_plot <- 10
+      
       p_plot <- p_plot + gamma_density + xlab(expression(lambda)) +
-        scale_x_continuous(
-          limits = c(qgamma(1e-5, bag$th_hat1, bag$th_hat2), 
-            qgamma(1-1e-5, bag$th_hat1, bag$th_hat2))
-        )
+        xlim(c(qgamma(1e-5, alpha_plot, beta_plot), 
+            qgamma(1e-5, alpha_plot, beta_plot, lower.tail = FALSE)
+        ))
     
     } else if (input$data_model == "Normal (known variance)") {
+      
+      # set x-axis limits based on widest possible prior (n = 10)
+      mean_plot <- mean(bag$selected_keep$selected_param)
+      sd_plot <- input$pop_sd / sqrt(10)
+      
       p_plot <- p_plot + normal_density + xlab(expression(mu)) +
-        scale_x_continuous(
-          limits = c(qnorm(1e-5, bag$th_hat1, sqrt(bag$th_hat2)), 
-            qnorm(1-1e-5, bag$th_hat1, sqrt(bag$th_hat2)))
-        )
+        xlim(c(qnorm(1e-5, mean_plot, sd_plot), 
+            qnorm(1e-5, mean_plot, sd_plot, lower.tail = FALSE)
+        ))
     }
     
-    # change x-axis bounds based on user inputs
-    if (input$change_x_axis) {
-       p_plot <- p_plot + xlim(c(input$lower_x, input$upper_x))
-    }
-    
+    # # change x-axis bounds based on user inputs
+    # if (input$change_x_axis) {
+    #    p_plot <- p_plot + xlim(c(input$lower_x, input$upper_x))
+    # }
+
     (bag$p_plot <- p_plot)
   })
   
@@ -940,19 +989,29 @@ shinyServer(function(input, output, session){
   # plot elicited prior -- conditional of mean for normal (unknown var) case
   output$prior_plot_normal_mean <- renderPlot({
 
+    ##### set x-axis limits based on widest possible prior (n = 10)
+    # for variance plot
+    bag$alpha_plot <- 10 / 2
+    bag$beta_plot <- 0.5 * mean(bag$selected_keep_normal_var$selected_param) * (10 + 3)
+    
+    # for mean plot
+    bag$mean_plot <- mean(bag$selected_keep_normal_mean$selected_param)
+    bag$var_plot <- bag$beta_plot / ((bag$alpha_plot + 1) * 10)
+
+    
     p_plot_mean <- ggplot(bag$selected_keep_normal_mean, aes(x = selected_param)) +
 		  stat_function(fun = dnorm, geom = "area", n = 1e5,
 		    args = list(mean = bag$th_hat1_mean, sd = sqrt(bag$th_hat2_mean)),
 		    fill = "blue", alpha = 0.5, color = NA
 		  ) +
-      scale_x_continuous(
-        limits = c(qnorm(1e-5, bag$th_hat1_mean, sqrt(bag$th_hat2_mean)), 
-          qnorm(1-1e-5, bag$th_hat1_mean, sqrt(bag$th_hat2_mean))
+      xlim(c(qnorm(1e-5, bag$mean_plot, sqrt(bag$var_plot)), 
+          qnorm(1e-5, bag$mean_plot, sqrt(bag$var_plot), lower.tail = FALSE)
       )) +
     	labs(x = expression(mu), y = "Density", title = "Elicited Prior Density") +
     	theme(plot.title = element_text(size = 17),
     		axis.title.x = element_text(margin = margin(15, 0, 0, 0)),
-    		axis.title.y = element_text(margin = margin(0, 10, 0, 0)))
+    		axis.title.y = element_text(margin = margin(0, 10, 0, 0))
+    	)
 
     (bag$p_plot_mean <- p_plot_mean)
   })
@@ -966,14 +1025,14 @@ shinyServer(function(input, output, session){
         args = list(shape = bag$th_hat1_var, rate = bag$th_hat2_var),
         fill = "blue", alpha = 0.5, color = NA
       ) +
-      scale_x_continuous(
-        limits = c(qinvgamma(1e-5, bag$th_hat1_var, bag$th_hat2_var), 
-          qinvgamma(1-1e-5, bag$th_hat1_var, bag$th_hat2_var)
+      xlim(c(qinvgamma(1e-2, bag$alpha_plot, bag$beta_plot), 
+          qinvgamma(1e-2, bag$alpha_plot, bag$beta_plot, lower.tail = FALSE)
       )) +
       labs(x = expression(sigma^2), y = "Density", title = "Elicited Prior Density") +
       theme(plot.title = element_text(size = 17),
         axis.title.x = element_text(margin = margin(15, 0, 0, 0)),
-        axis.title.y = element_text(margin = margin(0, 10, 0, 0)))
+        axis.title.y = element_text(margin = margin(0, 10, 0, 0))
+      )
 
     (bag$p_plot_var <- p_plot_var)
   })
@@ -1013,16 +1072,21 @@ shinyServer(function(input, output, session){
     
   	h_plot <- ggplot() +
 			geom_point(data = bag$store_mesh, aes(x = step, y = intervals, size = 0.7)) + 
-			geom_point(data = bag$store_all_selected, aes(x = step, y = selected_param, 
-	  		color = "red", size = 0.7)) +
-	  	geom_line(data = bag$store_all_selected, aes(x = step, y = selected_param, 
-				color = "red", size = 0.6)) +
-			scale_x_continuous(limits = c(0, bag$counter), breaks = seq(0, bag$counter, by = 10)) +
+			geom_point(data = bag$store_all_selected, 
+			  aes(x = step, y = selected_param, color = "red", size = 0.7)
+			) +
+	  	geom_line(data = bag$store_all_selected, 
+	  	  aes(x = step, y = selected_param, color = "red", size = 0.6)
+	    ) +
+			scale_x_continuous(limits = c(0, bag$counter), 
+			  breaks = seq(0, bag$counter, by = 10)
+			) +
     	xlab("Selection Number") +
 			theme(plot.title = element_text(size = 16, hjust = 0), 
 				axis.title.x = element_text(size = 16, margin = margin(15, 0, 0, 0)), 
     		axis.title.y = element_text(size = 16, margin = margin(0, 10, 0, 0)),
-				legend.position = "none")
+				legend.position = "none"
+			)
   	
   	if (input$data_model == "Bernoulli") {
   		h_plot <- h_plot + ylab("p") + 
@@ -1043,20 +1107,27 @@ shinyServer(function(input, output, session){
   output$history_plot_normal_mean <- renderPlot({
     
   	h_plot_mean <- ggplot() +
-			geom_point(data = bag$store_normal_mean_mesh, aes(x = step, y = intervals, 
-				size = 0.7)) + 
-			geom_point(data = bag$store_normal_mean_selected, aes(x = step, y = selected_param, 
-	  		color = "red", size = 0.7)) +
-	  	geom_line(data = bag$store_normal_mean_selected, aes(x = step, y = selected_param, 
-				color = "red", size = 0.6)) +
-			scale_x_continuous(limits = c(0, bag$mean_counter), breaks = seq(0, bag$mean_counter, 
-				by = 10)) +
+			geom_point(data = bag$store_normal_mean_mesh, 
+			  aes(x = step, y = intervals, size = 0.7)
+			) + 
+			geom_point(data = bag$store_normal_mean_selected, 
+			  aes(x = step, y = selected_param, color = "red", size = 0.7)
+			) +
+	  	geom_line(data = bag$store_normal_mean_selected, 
+	  	  aes(x = step, y = selected_param, color = "red", size = 0.6)
+	  	) +
+			scale_x_continuous(
+			  limits = c(0, bag$mean_counter), 
+			  breaks = seq(0, bag$mean_counter, by = 10)
+			) +
 			labs(x = "Selection Number", y = expression(mu), 
-				title = "Red:    Selected mean\nBlack:  Unselected mean") +
+				title = "Red:    Selected mean\nBlack:  Unselected mean"
+			) +
 			theme(plot.title = element_text(size = 16, hjust = 0), 
 				axis.title.x = element_text(margin = margin(15, 0, 0, 0)), 
     		axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
-				legend.position = "none")
+				legend.position = "none"
+			)
   	
   	(bag$h_plot_mean <- h_plot_mean)
   })
@@ -1064,19 +1135,26 @@ shinyServer(function(input, output, session){
   output$history_plot_normal_var <- renderPlot({
     
   	h_plot_var <- ggplot() +
-			geom_point(data = bag$store_normal_var_mesh, aes(x = step, y = intervals, size = 0.7)) + 
-			geom_point(data = bag$store_normal_var_selected, aes(x = step, y = selected_param, 
-	  		color = "red", size = 0.7)) +
-	  	geom_line(data = bag$store_normal_var_selected, aes(x = step, y = selected_param, 
-				color = "red", size = 0.6)) +
-			scale_x_continuous(limits = c(0, bag$var_counter), breaks = seq(0, bag$var_counter, 
-				by = 10)) +
+			geom_point(data = bag$store_normal_var_mesh, 
+			  aes(x = step, y = intervals, size = 0.7)
+			) + 
+			geom_point(data = bag$store_normal_var_selected, 
+			  aes(x = step, y = selected_param, color = "red", size = 0.7)
+      ) +
+	  	geom_line(data = bag$store_normal_var_selected, 
+	  	  aes(x = step, y = selected_param, color = "red", size = 0.6)
+	  	) +
+			scale_x_continuous(limits = c(0, bag$var_counter), 
+			  breaks = seq(0, bag$var_counter, by = 10)
+			) +
 			labs(x = "Selection Number", y = expression(sigma^2), 
-				title = "Red:    Selected variance\nBlack:  Unselected variance") +
+				title = "Red:    Selected variance\nBlack:  Unselected variance"
+			) +
 			theme(plot.title = element_text(size = 16, hjust = 0), 
 				axis.title.x = element_text(margin = margin(15, 0, 0, 0)), 
     		axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
-				legend.position = "none")
+				legend.position = "none"
+			)
   	
   	(bag$h_plot_var <- h_plot_var)
   })

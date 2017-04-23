@@ -5,7 +5,7 @@ output: pdf_document
 ---
 
 ```{r setup, include = FALSE} 
-knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 3, comment = "")
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 2.8, comment = "")
 ```
 
 
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 3, comment = "")
 <!--- user inputs -->
 ## User Inputs
 ```{r}
-inputs <- data.frame("." = c(input$data_model, input$n),
+inputs <- data.frame("." = c(input$data_model, bag$n),
                      row.names = c("Data Model", "Observations  ")
 )
 cat(capture.output(inputs)[-1], sep = "\n")

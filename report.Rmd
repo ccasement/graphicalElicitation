@@ -5,7 +5,7 @@ output: pdf_document
 ---
 
 ```{r setup, include = FALSE} 
-knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 3, comment = "")
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 2.8, comment = "")
 ```
 
 
@@ -15,12 +15,12 @@ knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 3, comment = "")
 ## User Inputs
 ```{r}
 if(input$data_model == "Bernoulli" || input$data_model == "Poisson"){
-	inputs <- data.frame("." = c(input$data_model, input$n),
+	inputs <- data.frame("." = c(input$data_model, bag$n),
 	                     row.names = c("Data Model", "Observations  ")
 	)
 }
 if(input$data_model == "Normal (known variance)"){
-	inputs <- data.frame("." = c(input$data_model, input$n, input$pop_sd),
+	inputs <- data.frame("." = c(input$data_model, bag$n, input$pop_sd),
 	                     row.names = c("Data Model", "Observations", "Population Std. Dev.")
 	)
 }

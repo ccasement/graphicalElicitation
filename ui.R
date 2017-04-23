@@ -427,47 +427,46 @@ navbarPage("Graphical Elicitation",
                 )
               ),
               
-              sliderInput("new_n", label = "New Number of Times", min = 10, 
-                max = 1e3, value = 20, step = 5
-              )
+              numericInput("new_n", label = "New Number of Times", value = 20),
+              actionButton("change_ess", "Update", class = "btn btn-primary")
             )
-          ),
+          ) #,
           
-          column(2,
-            checkboxInput("change_selections_kept", label = "Change Selections Kept", 
-              value = FALSE
-            ),
+          # column(2,
+          #   checkboxInput("change_selections_kept", label = "Change Selections Kept", 
+          #     value = FALSE
+          #   ),
+          # 
+          #   conditionalPanel(
+          #     condition = "input.change_selections_kept",
+          # 
+          #     numericInput("new_kept", label = "New Value", value = 5),
+          #     actionButton("change_warmup", "Update Selections Kept", 
+          #       class = "btn btn-primary"
+          #     )
+          #   )
+          # ),
 
-            conditionalPanel(
-              condition = "input.change_selections_kept",
-
-              numericInput("new_kept", label = "New Value", value = 5),
-              actionButton("change_warmup", "Update Selections Kept", 
-                class = "btn btn-primary"
-              )
-            )
-          ),
-
-      		column(3,
-	        	checkboxInput("plot_options", label = "Plot Options", value = FALSE),
-
-	        	conditionalPanel(
-	        		condition = "input.plot_options",
-
-        		  column(11, h5("Change the minimum and maximum values of the x-axis.")),
-        		  
-      			  column(5, numericInput("lower_x", "Minimum", value = 0)),
-
-      			  column(5, numericInput("upper_x", "Maximum", value = 1)),
-        			
-        			column(10,
-	        			actionButton("change_x_axis", "Update Min and Max", 
-	        				class = "btn btn-primary"),
-        				align = "center",
-        				h3("")
-		        	)
-	        	)
-      		)
+#       		column(3,
+# 	        	checkboxInput("plot_options", label = "Plot Options", value = FALSE),
+# 
+# 	        	conditionalPanel(
+# 	        		condition = "input.plot_options",
+# 
+#         		  column(11, h5("Change the minimum and maximum values of the x-axis.")),
+#         		  
+#       			  column(5, numericInput("lower_x", "Minimum", value = 0)),
+# 
+#       			  column(5, numericInput("upper_x", "Maximum", value = 1)),
+#         			
+#         			column(10,
+# 	        			actionButton("change_x_axis", "Update Min and Max", 
+# 	        				class = "btn btn-primary"),
+#         				align = "center",
+#         				h3("")
+# 		        	)
+# 	        	)
+#       		)
         ),
 
         conditionalPanel(
@@ -537,9 +536,10 @@ navbarPage("Graphical Elicitation",
         	        )
         	      ),
         	      
-        	      sliderInput("new_normal_n", label = "New Number of Times", min = 10, 
-        	        max = 1e3, value = 20, step = 5
-        	      )
+        	      numericInput("new_normal_n", label = "New Number of Times", 
+        	        value = 20
+        	      ),
+        	      actionButton("change_normal_ess", "Update", class = "btn btn-primary")
         	    )
         	  ),
 
