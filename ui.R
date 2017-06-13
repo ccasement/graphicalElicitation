@@ -235,22 +235,22 @@ navbarPage("Graphical Elicitation",
           actionButton("new_training_plots", label = "Generate New Graphs", 
             class = "btn btn-primary"),
           style = "padding-top: 50px;"
-        ),
+        ) #,
         
-        column(6,
-          checkboxInput("change_N", label = "Change Size of Hypothetical Dataset", 
-            value = FALSE),
-          
-          conditionalPanel(
-            condition = "input.change_N",
-            
-            h5("Change the number of observations in the hypothetical dataset."),
-            
-            numericInput("new_N", label = "Number of Observations", value = 100, 
-              width = "45%"),
-            actionButton("hypothetical_N", "Update", class = "btn btn-primary")
-          )
-        )
+        # column(6,
+        #   checkboxInput("change_N", label = "Change Size of Hypothetical Dataset", 
+        #     value = FALSE),
+        #   
+        #   conditionalPanel(
+        #     condition = "input.change_N",
+        #     
+        #     h5("Change the number of observations in the hypothetical dataset."),
+        #     
+        #     numericInput("new_N", label = "Number of Observations", value = 100, 
+        #       width = "45%"),
+        #     actionButton("hypothetical_N", "Update", class = "btn btn-primary")
+        #   )
+        # )
       ),
 
 
@@ -366,7 +366,9 @@ navbarPage("Graphical Elicitation",
         	column(3,
           	strong("Prior Family"),
           	verbatimTextOutput("prior_family_output"),
-          	tags$head(tags$style("#prior_family_output{font-size: 13px;}")),
+        	  tags$head(tags$style("#prior_family_output{font-family: helvetica;" 
+        	    #font-size: 13px;}"
+        	  )),
 
             strong("Elicited Parameters"),
             verbatimTextOutput("prior_params"),
@@ -430,43 +432,7 @@ navbarPage("Graphical Elicitation",
               numericInput("new_n", label = "New Number of Times", value = 20),
               actionButton("change_ess", "Update", class = "btn btn-primary")
             )
-          ) #,
-          
-          # column(2,
-          #   checkboxInput("change_selections_kept", label = "Change Selections Kept", 
-          #     value = FALSE
-          #   ),
-          # 
-          #   conditionalPanel(
-          #     condition = "input.change_selections_kept",
-          # 
-          #     numericInput("new_kept", label = "New Value", value = 5),
-          #     actionButton("change_warmup", "Update Selections Kept", 
-          #       class = "btn btn-primary"
-          #     )
-          #   )
-          # ),
-
-#       		column(3,
-# 	        	checkboxInput("plot_options", label = "Plot Options", value = FALSE),
-# 
-# 	        	conditionalPanel(
-# 	        		condition = "input.plot_options",
-# 
-#         		  column(11, h5("Change the minimum and maximum values of the x-axis.")),
-#         		  
-#       			  column(5, numericInput("lower_x", "Minimum", value = 0)),
-# 
-#       			  column(5, numericInput("upper_x", "Maximum", value = 1)),
-#         			
-#         			column(10,
-# 	        			actionButton("change_x_axis", "Update Min and Max", 
-# 	        				class = "btn btn-primary"),
-#         				align = "center",
-#         				h3("")
-# 		        	)
-# 	        	)
-#       		)
+          )
         ),
 
         conditionalPanel(
@@ -655,7 +621,7 @@ navbarPage("Graphical Elicitation",
     column(4,
       # select graphs
       h3("Select Graphs"),
-      p("Five datasets, each with 50 observations, are plotted; these are based 
+      p("Five datasets, each with 100 observations, are plotted; these are based 
         on the inputs you specified in the 'Select Model' tab. You must select 
         the graph that is most reasonable as a hypothetical future dataset. Once 
         you select a graph, five new ones will be displayed. The number of 
@@ -676,9 +642,8 @@ navbarPage("Graphical Elicitation",
         (defaulted to 5), and the number discarded (referred to as the 
         'warm-up'), and (5) a density plot of the elicited prior."),
       p("Additional Options:"),
-      p("(1) Find Prior Probability: allows you to find
-        the probability between two values of the parameter (based on
-        the elicited prior)."),
+      p("(1) Find Prior Probability: allows you to find the probability between 
+        two values of the parameter (based on the elicited prior)."),
       p("(2) Change Past Sample Size: allows you to change the number of times 
         you have seen the scenario of interest. You previously set this value on 
         the 'Select Model' tab."),
@@ -724,7 +689,7 @@ navbarPage("Graphical Elicitation",
       # information about the developers
       h4("Developers"),
       p("This tool was developed by Chris Casement (Ph.D. candidate) and David 
-        Kahle (Assistant Professor), both of the Department of Statistical 
+        Kahle (Associate Professor), both of the Department of Statistical 
         Science at Baylor University."),
       br(),
       
@@ -737,7 +702,7 @@ navbarPage("Graphical Elicitation",
       
       # contact info
       h4("Contact"),
-      p("Email: chris_casement@baylor.edu"),
+      p("Email: casementc@gmail.com"),
       br(),
       br(),
       
@@ -748,5 +713,5 @@ navbarPage("Graphical Elicitation",
       )
     )
   )
-) # end navBarPage()
+) # end navbarPage()
 

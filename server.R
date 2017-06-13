@@ -1,5 +1,4 @@
 
-
 library(shiny)
 library(ggplot2); theme_set(theme_bw(18))
 library(scales)
@@ -8,19 +7,20 @@ library(tidyr)
 library(invgamma)
 library(rmarkdown)
 
-shinyServer(function(input, output, session){
+
+shinyServer(function(input, output, session) {
   
   ##### define basic quantities and global functions
   ############################################################
 	
   n_frames <- 5       # number of graphs shown at each step
   
-  smallest_lambda <- function(x, q = 0.99, L = 0.001, U = 1e6){
+  smallest_lambda <- function(x, q = 0.99, L = 0.001, U = 1e6) {
     f <- function(la) ppois(x, la, lower.tail = FALSE) - q
     uniroot(f, lower = L, upper = U)$root
   }
 
-  biggest_lambda <- function(x, q = 0.99, L = 0.001, U = 1e6){
+  biggest_lambda <- function(x, q = 0.99, L = 0.001, U = 1e6) {
     f <- function(la) ppois(x, la) - q
     uniroot(f, lower = L, upper = U)$root
   }
@@ -34,7 +34,7 @@ shinyServer(function(input, output, session){
   ############################################################
   bag <- reactiveValues()
   
-  # hypothetical sample size
+  # hypothetical future sample size
   bag$N <- 100
   
   # counters
@@ -58,20 +58,18 @@ shinyServer(function(input, output, session){
   generate_permutation <- function() bag$permutation <- sample(n_frames)
   
   # generate datasets -- one unknown parameter cases
-  generate_datasets <- function(){
+  generate_datasets <- function() {
   	
   	if (input$data_model == "Bernoulli") {
-  	  list_of_datasets <- lapply(bag$param_mesh, function(th){
+  	  list_of_datasets <- lapply(bag$param_mesh, function(th) {
       	data.frame(x = rbinom(bag$N, 1, th), param = th, stringsAsFactors = FALSE)
     	})
-  	  
   	} else if (input$data_model == "Poisson") {
-  	  list_of_datasets <- lapply(bag$param_mesh, function(th){
+  	  list_of_datasets <- lapply(bag$param_mesh, function(th) {
       	data.frame(x = rpois(bag$N, th), param = th, stringsAsFactors = FALSE)
     	})
-    	  
   	} else if (input$data_model == "Normal (known variance)") {
-  	  list_of_datasets <- lapply(bag$param_mesh, function(th){
+  	  list_of_datasets <- lapply(bag$param_mesh, function(th) {
     	  data.frame(x = rnorm(bag$N, th, input$pop_sd), param = th, 
     		  stringsAsFactors = FALSE)
     	})
@@ -85,8 +83,7 @@ shinyServer(function(input, output, session){
   }
   
   # generate datasets -- unknown mean and var case
-	generate_normal_mean_datasets <- function(){
-	  
+	generate_normal_mean_datasets <- function() {
 		list_of_datasets <- lapply(bag$normal_mean_mesh, function(th){
     	data.frame(x = rnorm(bag$N, th, sqrt(bag$var_selected)), param = th, 
     		stringsAsFactors = FALSE)
@@ -96,9 +93,8 @@ shinyServer(function(input, output, session){
     bag$datasets$perm <<- rep(bag$permutation, each = bag$N)
 	}
 	
-	generate_normal_var_datasets <- function(){
-	  
-		list_of_datasets <- lapply(bag$normal_var_mesh, function(th){
+	generate_normal_var_datasets <- function() {
+		list_of_datasets <- lapply(bag$normal_var_mesh, function(th) {
     	data.frame(x = rnorm(bag$N, bag$mean_selected, sqrt(th)), param = th, 
     		stringsAsFactors = FALSE)
 		})
@@ -110,12 +106,11 @@ shinyServer(function(input, output, session){
 	
   ##### define general updating and storing functions
   ############################################################
-  store_values <- function(){
+  store_values <- function() {
   	
   	bag$counter <<- bag$counter + 1
   	
   	if (input$data_model == "Normal (unknown variance)") {
-  	  
   		if (bag$counter %% 2 == 0) {
   			bag$var_counter <<- bag$var_counter + 1
   			bag$var_selected <<- bag$param_selected
@@ -126,7 +121,6 @@ shinyServer(function(input, output, session){
 	    		2] <<- bag$var_counter
 	    	bag$store_normal_var_selected[bag$var_counter, 1] <<- bag$var_selected
 	    	bag$store_normal_var_selected[bag$var_counter, 2] <<- bag$var_counter
-	    	
   		} else {
   			bag$mean_counter <<- bag$mean_counter + 1
   			bag$mean_selected <<- bag$param_selected
@@ -138,7 +132,6 @@ shinyServer(function(input, output, session){
 	    	bag$store_normal_mean_selected[bag$mean_counter, 1] <<- bag$mean_selected
 	    	bag$store_normal_mean_selected[bag$mean_counter, 2] <<- bag$mean_counter
   		}
-  	  
   	} else {
 	    bag$store_mesh[((n_frames*(bag$counter - 1) + 1) : (n_frames*bag$counter)), 1] <<- bag$param_mesh
 	    bag$store_mesh[((n_frames*(bag$counter - 1) + 1) : (n_frames*bag$counter)), 2] <<- bag$counter
@@ -150,20 +143,18 @@ shinyServer(function(input, output, session){
   
   ##### generate output plots
   ############################################################
-  make_plots <- function(my_df){
+  make_plots <- function(my_df) {
   	
   	if (input$data_model == "Bernoulli") {
   		g <- ggplot(my_df, aes(x = factor(x, levels = 0:1))) +
   			geom_bar() +
   			facet_grid(. ~ perm) + 
   			scale_x_discrete("", breaks = 0:1, labels = c("Failure", "Success"))
-  		
   	} else if (input$data_model == "Poisson") {
     	g <- ggplot(my_df, aes(x = x)) + 
     	  geom_histogram(bins = nclass.scott(my_df$x) + 5) +
     		facet_grid(perm ~ .) +
       	scale_x_continuous("Number of Occurrences")
-    	
   	} else {
     	g <- ggplot(my_df, aes(x = x)) + 
     	  geom_histogram(bins = nclass.scott(my_df$x) + 5) +
@@ -174,14 +165,16 @@ shinyServer(function(input, output, session){
   	
   	# return plot
   	g + ylab("Count") + 
-  		theme(axis.title.x = element_text(margin = margin(15, 0, 0, 0)), 
-    		axis.title.y = element_text(margin = margin(0, 10, 0, 0)))
+  		theme(
+  		  axis.title.x = element_text(margin = margin(15, 0, 0, 0)), 
+    		axis.title.y = element_text(margin = margin(0, 10, 0, 0))
+  		)
   }
   
   
   ##### generate training plots
   ###########################################################
-  make_training_plots <- function(){
+  make_training_plots <- function() {
   	
   	# number of training plots
 		samples <- 1:9
@@ -191,7 +184,7 @@ shinyServer(function(input, output, session){
 		  bag$N <- input$new_N
 		  
 		  # randomly generate datasets
-		  list_of_datasets <- lapply(bag$param_mesh, function(th){
+		  list_of_datasets <- lapply(bag$param_mesh, function(th) {
 		    data.frame(x = bag$init_rng(bag$N, th), param = th)
 		  })
 		  
@@ -205,60 +198,53 @@ shinyServer(function(input, output, session){
 		  # remake initial selection plots
 		  if (input$data_model == "Bernoulli") {
 		    output$select_plots_bern <- renderPlot( make_plots(bag$datasets) )
-		    
-		  } else output$select_plots <- renderPlot( make_plots(bag$datasets) )
+		  } else {
+		    output$select_plots <- renderPlot( make_plots(bag$datasets) )
+		  }
 		})
 		
-
 		if (input$data_model == "Bernoulli") {
   	  training_datasets <- lapply(seq_along(samples), function(samples){
   	    data.frame(x = rbinom(bag$N, 1, input$training_successes / bag$N), 
   	      samp = samples, stringsAsFactors = FALSE
   	    )
   	  })
-  	  
   	  training_df <- do.call(rbind, training_datasets)
   	  
   		g <- ggplot(training_df, aes(x = factor(x, levels = 0:1))) +
   			geom_bar() +
   			facet_wrap(~ samp) + 
   			scale_x_discrete("", breaks = 0:1, labels = c("Failure", "Success"))
-  		
   	} else if (input$data_model == "Poisson") {
   	  training_datasets <- lapply(seq_along(samples), function(samples){
   	    data.frame(x = rpois(bag$N, input$training_rate), samp = samples, 
   	      stringsAsFactors = FALSE
   	    )
   	  })
-  	  
   	  training_df <- do.call(rbind, training_datasets)
   		
     	g <- ggplot(training_df, aes(x = x)) + 
     	  geom_histogram(bins = nclass.scott(training_df$x)) +
     		facet_wrap(~ samp) +
       	scale_x_continuous("Number of Occurrences")
-      	
   	} else if (input$data_model == "Normal (known variance)") {
   	  training_datasets <- lapply(seq_along(samples), function(samples){
       	data.frame(x = rnorm(bag$N, input$training_mean1, input$training_sd1), 
       	  samp = samples, stringsAsFactors = FALSE
       	)
     	})
-  	  
   	  training_df <- do.call(rbind, training_datasets)
   	  
     	g <- ggplot(training_df, aes(x = x)) + 
     	  geom_histogram(bins = nclass.scott(training_df$x)) +
     		facet_wrap(~ samp) +
       	scale_x_continuous(NULL)
-      	
   	} else {
-			training_datasets <- lapply(seq_along(samples), function(samples){
+			training_datasets <- lapply(seq_along(samples), function(samples) {
 				data.frame(x = rnorm(bag$N, input$training_mean2, input$training_sd2),
 				  samp = samples, stringsAsFactors = FALSE
 				)
 			})
-			
 			training_df <- do.call(rbind, training_datasets)
 
     	g <- ggplot(training_df, aes(x = x)) +
@@ -274,53 +260,42 @@ shinyServer(function(input, output, session){
     		axis.title.y = element_text(margin = margin(0, 10, 0, 0))
   	  )
   }
-  
+
 	
 	# generate new parameter mesh
-	make_interval <- function(interval, selected){
+	make_interval <- function(interval, selected) {
 	  
 	  # bernoulli case
 	  if (input$data_model == "Bernoulli") {
-	    
 	    logit_l <- logistic(selected) - bag$w_link * bag$multiplier^bag$counter / 2
 	    logit_u <- logistic(selected) + bag$w_link * bag$multiplier^bag$counter / 2
 	    param_l <- expit(logit_l)
 	    param_u <- expit(logit_u)
 	    bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
-	    
 	  } else if (input$data_model == "Poisson") {
-	    
 	    log_l <- log(selected) - (log(selected) - log(min(interval))) * bag$multiplier
 	    log_u <- log(selected) + (log(max(interval)) - log(selected)) * bag$multiplier
 	    param_l <- exp(log_l)
 	    param_u <- exp(log_u)
 	    bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
-	    
 	  } else if (input$data_model == "Normal (known variance)") {
-	    
 	    param_l <- selected - bag$w_link * bag$multiplier^bag$counter / 2
 	    param_u <- selected + bag$w_link * bag$multiplier^bag$counter / 2
 	    bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
-	    
 	  } else {
-
 	    # mean if counter is even, variance if counter is odd
 	    if (bag$counter %% 2 == 0) {
-	      
 	      param_l <- selected - bag$w_link_mean * bag$multiplier^bag$mean_counter / 2
 	      param_u <- selected + bag$w_link_mean * bag$multiplier^bag$mean_counter / 2
 	      bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
 	      bag$normal_mean_mesh <<- bag$param_mesh
-	      
 	    } else {
-	      
 	      log_l <- log(selected) - (log(selected) - log(min(interval))) * bag$multiplier
 	      log_u <- log(selected) + (log(max(interval)) - log(selected)) * bag$multiplier
 	      param_l <- exp(log_l)
 	      param_u <- exp(log_u)
 	      bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
 	      bag$normal_var_mesh <<- bag$param_mesh
-	      
 	    }
 	  }
 	}
@@ -328,40 +303,36 @@ shinyServer(function(input, output, session){
 	
   ##### specify what to do when a selection is made
   ############################################################
-  update_all <- function(){
+  update_all <- function() {
     store_values()
 
     if (input$data_model != "Normal (unknown variance)") {
       make_interval(bag$param_mesh, bag$param_selected)
       generate_permutation()
       generate_datasets()
-    
     } else {
-
   		if (bag$counter %% 2 == 0) {
   			make_interval(bag$normal_mean_mesh, bag$mean_selected)
   			generate_permutation()
   			generate_normal_mean_datasets()
-
   		} else {
-  		  
   		  if (bag$counter > 1) make_interval(bag$normal_var_mesh, bag$var_selected)
 
   			generate_permutation()
   			generate_normal_var_datasets()
   		}
     }
-    
+  
     if (input$data_model == "Bernoulli") {
       output$select_plots_bern <- renderPlot( make_plots(bag$datasets) )
-    
-    } else output$select_plots <- renderPlot( make_plots(bag$datasets) )
+    } else{
+      output$select_plots <- renderPlot( make_plots(bag$datasets) )
+    }
   }
 
 
 	# set prior family
 	observeEvent(input$data_model, {
-	  
 	  if (input$data_model == "Bernoulli") bag$prior_fam <- "Beta"
 	  else if (input$data_model == "Poisson") bag$prior_fam <- "Gamma"
 	  else if (input$data_model == "Normal (known variance)") bag$prior_fam <- "Normal"
@@ -421,7 +392,7 @@ shinyServer(function(input, output, session){
 	})
 	
 	
-	# initial process for poisson case
+	# initial process for all cases except bernoulli
 	observeEvent(input$set_non_bern_inputs, {
 	  
 	  if (input$data_model == "Poisson") {
@@ -452,10 +423,9 @@ shinyServer(function(input, output, session){
   	  bag$init_rng <- function(N, th) rpois(N, th)
   	  
   	  # randomly generate datasets
-  	  list_of_datasets <- lapply(bag$param_mesh, function(th){
+  	  list_of_datasets <- lapply(bag$param_mesh, function(th) {
   	    data.frame(x = bag$init_rng(bag$N, th), param = th)
   	  })
-	  
 	  } else if (input$data_model == "Normal (known variance)") {
 	    # set initial parameter mesh
 	    low_init <- input$min_init
@@ -484,10 +454,9 @@ shinyServer(function(input, output, session){
 	    bag$init_rng <- function(N, th) rnorm(N, th, input$pop_sd)
 	    
 	    # randomly generate datasets
-	    list_of_datasets <- lapply(bag$param_mesh, function(th){
+	    list_of_datasets <- lapply(bag$param_mesh, function(th) {
 	      data.frame(x = bag$init_rng(bag$N, th), param = th)
 	    })
-	    
 	  } else if (input$data_model == "Normal (unknown variance)") {
 	    # set initial parameter mesh for mean
 	    low_init_mean <- input$min_init
@@ -530,7 +499,7 @@ shinyServer(function(input, output, session){
 	    bag$init_rng <- function(N, th) rnorm(N, th, bag$est_sd)
 	    
 	    # randomly generate datasets
-	    list_of_datasets <- lapply(bag$mean_param_mesh, function(th){
+	    list_of_datasets <- lapply(bag$mean_param_mesh, function(th) {
 	      data.frame(x = bag$init_rng(bag$N, th), param = th)
 	    })
 	  }
@@ -569,7 +538,7 @@ shinyServer(function(input, output, session){
 	observeEvent(input$new_training_plots, {
 	  output$training_plots <- renderPlot( make_training_plots() )
 	})
-	
+
 
   ##### react to graph selections -- bernoulli case
   ############################################################
@@ -634,46 +603,33 @@ shinyServer(function(input, output, session){
   
   
   # calculate hyperparameters using ESS
-  compute_hypers <- function(){
-    
+  compute_hypers <- function() {
     if (input$data_model != "Normal (unknown variance)") {
-      
       if (bag$warmup == 0) {
         bag$selected_keep <- bag$store_all_selected
-        
       } else {
-        
         # remove warm-up
         bag$selected_keep <- bag$store_all_selected[-(1:bag$warmup), ]
       }
-    
+      
       if (input$data_model == "Bernoulli") {
-        
         bag$th_hat1 <- mean(bag$selected_keep$selected_param) * (bag$n - 2) + 1  # alpha
         bag$th_hat2 <- bag$n - bag$th_hat1                                       # beta
-      
       } else if (input$data_model == "Poisson") {
-        
         bag$th_hat1 <- bag$n * mean(bag$selected_keep$selected_param) + 1  # alpha
         bag$th_hat2 <- bag$n                                               # beta
-      
       } else if (input$data_model == "Normal (known variance)") {
       
         bag$th_hat1 <- mean(bag$selected_keep$selected_param)  # mu
         bag$th_hat2 <- (input$pop_sd)^2 / bag$n                # sigma^2
       }
-      
     } else {
-
       if (bag$warmup == 0) {
-        
         bag$selected_keep_normal_var <<- bag$store_normal_var_selected
         bag$selected_keep_normal_mean <<- bag$store_normal_mean_selected
       } else {
-      
         bag$selected_keep_normal_var <<- bag$store_normal_var_selected[-(1:bag$warmup), ]
         bag$selected_keep_normal_mean <<- bag$store_normal_mean_selected[-(1:bag$warmup), ]
-        
       }
       
       # alpha
@@ -690,14 +646,12 @@ shinyServer(function(input, output, session){
 
   
   # print hyperparameters for all cases except normal (unknown var)
-  print_hypers <- function(){
-    
+  print_hypers <- function() {
     if (input$data_model == "Bernoulli" || input$data_model == "Poisson") {
       bag$hyper_params <<- data.frame(
         "." = round(c(bag$th_hat1, bag$th_hat2), 3),
         row.names = c("Alpha  ", "Beta")
       )
-      
     } else if (input$data_model == "Normal (known variance)") {
       bag$hyper_params <<- data.frame(
         "." = round(c(bag$th_hat1, bag$th_hat2), 3),
@@ -711,7 +665,6 @@ shinyServer(function(input, output, session){
   
   
   output$prior_params <- renderPrint({
-    
     compute_hypers()
     print_hypers()
 	})
@@ -719,7 +672,6 @@ shinyServer(function(input, output, session){
   
   # change ESS if user selects option
   observeEvent(input$change_ess, {
-    
     bag$n <- input$new_n
     compute_hypers()
     output$prior_params <- renderPrint( print_hypers() )
@@ -727,8 +679,7 @@ shinyServer(function(input, output, session){
 
 
  	# print hyperparameters for normal (unknown var) case
- 	print_normal_hypers_joint <- function(){  
- 	  
+ 	print_normal_hypers_joint <- function() {  
   	if (input$data_model == "Normal (unknown variance)") {
 			bag$hyper_params_joint <<- data.frame(
 				"." = round(c(bag$th_hat1_mean, bag$n, bag$th_hat1_var, bag$th_hat2_var), 3),
@@ -740,8 +691,7 @@ shinyServer(function(input, output, session){
 	  invisible(bag$hyper_params_joint)
  	}
  	
- 	print_normal_hypers_mean <- function(){  
- 	  
+ 	print_normal_hypers_mean <- function() {  
  	  if (input$data_model == "Normal (unknown variance)") {
  	    bag$hyper_params_mean <<- data.frame(
  	      "." = round(c(bag$th_hat1_mean, bag$th_hat2_mean), 3),
@@ -753,8 +703,7 @@ shinyServer(function(input, output, session){
  	  invisible(bag$hyper_params_joint)
  	}
  	
- 	print_normal_hypers_var <- function(){  
- 	  
+ 	print_normal_hypers_var <- function() {  
  	  if (input$data_model == "Normal (unknown variance)") {
  	    bag$hyper_params_var <<- data.frame(
  	      "." = round(c(bag$th_hat1_var, bag$th_hat2_var), 3),
@@ -769,7 +718,6 @@ shinyServer(function(input, output, session){
 
 	# fit prior for the normal (unknown var) mean
   output$prior_params_joint <- renderPrint({
-  	
     compute_hypers()
     print_normal_hypers_joint()
   })
@@ -779,11 +727,10 @@ shinyServer(function(input, output, session){
   
   # change normal (unknown var) ESS if user selects option
   observeEvent(input$change_normal_ess, {
-    
     bag$n <- input$new_normal_n
     compute_hypers()
+    
     output$prior_params_normal <- renderPrint({
-      
       print_normal_hypers_joint()
       print_normal_hypers_mean()
       print_normal_hypers_var()
@@ -792,8 +739,7 @@ shinyServer(function(input, output, session){
   
   
   # calculate prior summaries
-  compute_summaries <- function(){
-
+  compute_summaries <- function() {
     if (input$data_model != "Normal (unknown variance)") {
     	if (input$data_model == "Bernoulli") {
     		# beta prior
@@ -805,7 +751,6 @@ shinyServer(function(input, output, session){
     		bag$prior_2_5    <- qbeta(0.025, bag$th_hat1, bag$th_hat2)
     		bag$prior_97_5   <- qbeta(0.975, bag$th_hat1, bag$th_hat2)
     		bag$ess          <- bag$th_hat1 + bag$th_hat2
-    	
     	} else if (input$data_model == "Poisson") {
     		# gamma prior
     		bag$prior_mean   <- bag$th_hat1 / bag$th_hat2
@@ -815,7 +760,6 @@ shinyServer(function(input, output, session){
     		bag$prior_2_5    <- qgamma(0.025, bag$th_hat1, bag$th_hat2)
     		bag$prior_97_5   <- qgamma(0.975, bag$th_hat1, bag$th_hat2)
     		bag$ess          <- bag$th_hat2
-    	
     	} else if (input$data_model == "Normal (known variance)") {
     		# normal prior
     		bag$prior_mean   <- bag$th_hat1
@@ -832,7 +776,6 @@ shinyServer(function(input, output, session){
         ), 
         row.names = c("Mean", "Median", "Mode", "Std. Dev.  ", "2.5%", "97.5%", "ESS")
       )
-  	
   	} else {
   		# mean summaries -- normal prior
 	  	bag$mean_prior_mean   <- bag$th_hat1_mean
@@ -870,7 +813,6 @@ shinyServer(function(input, output, session){
   
   # print prior summaries for all cases except normal (unknown var)
   output$prior_summaries <- renderPrint({
-    
   	compute_summaries()
   	cat(capture.output(bag$summaries)[-1], sep = "\n")
   	invisible(bag$summaries)
@@ -878,7 +820,6 @@ shinyServer(function(input, output, session){
   
   # print prior summaries for normal (unknown var) mean
   output$prior_summaries_mean <- renderPrint({
-    
   	compute_summaries()
   	cat(capture.output(bag$summaries_mean)[-1], sep = "\n")
   	invisible(bag$summaries_mean)
@@ -886,7 +827,6 @@ shinyServer(function(input, output, session){
   
   # print prior summaries for normal (unknown var) variance
   output$prior_summaries_var <- renderPrint({
-    
   	cat(capture.output(bag$summaries_var)[-1], sep = "\n")
   	invisible(bag$summaries_var)
   })
@@ -894,7 +834,6 @@ shinyServer(function(input, output, session){
   
   # print number of selections
   output$all_selections <- renderPrint({
-    
   	bag$n_selections <<- data.frame(
 			"." = c(bag$counter, bag$counter - bag$warmup),
 			row.names = c("Total", "Kept")
@@ -926,7 +865,6 @@ shinyServer(function(input, output, session){
   
   # plot elicited prior -- all cases except normal (unknown var)
   output$prior_plot <- renderPlot({
-    
     # make plot
     beta_density <- stat_function(fun = dbeta, geom = "area", n = 1e5,
       args = list(shape1 = bag$th_hat1, shape2 = bag$th_hat2),
@@ -953,9 +891,7 @@ shinyServer(function(input, output, session){
     
     if (input$data_model == "Bernoulli") {
       p_plot <- p_plot + beta_density + xlab("p") + xlim(c(0, 1))
-    
     } else if (input$data_model == "Poisson") {
-      
       # set x-axis limits based on widest possible prior (n = 10)
       alpha_plot <- 10 * mean(bag$selected_keep$selected_param) + 1
       beta_plot <- 10
@@ -964,9 +900,7 @@ shinyServer(function(input, output, session){
         xlim(c(qgamma(1e-5, alpha_plot, beta_plot), 
             qgamma(1e-5, alpha_plot, beta_plot, lower.tail = FALSE)
         ))
-    
     } else if (input$data_model == "Normal (known variance)") {
-      
       # set x-axis limits based on widest possible prior (n = 10)
       mean_plot <- mean(bag$selected_keep$selected_param)
       sd_plot <- input$pop_sd / sqrt(10)
@@ -988,7 +922,6 @@ shinyServer(function(input, output, session){
 
   # plot elicited prior -- conditional of mean for normal (unknown var) case
   output$prior_plot_normal_mean <- renderPlot({
-
     ##### set x-axis limits based on widest possible prior (n = 10)
     # for variance plot
     bag$alpha_plot <- 10 / 2
@@ -998,7 +931,6 @@ shinyServer(function(input, output, session){
     bag$mean_plot <- mean(bag$selected_keep_normal_mean$selected_param)
     bag$var_plot <- bag$beta_plot / ((bag$alpha_plot + 1) * 10)
 
-    
     p_plot_mean <- ggplot(bag$selected_keep_normal_mean, aes(x = selected_param)) +
 		  stat_function(fun = dnorm, geom = "area", n = 1e5,
 		    args = list(mean = bag$th_hat1_mean, sd = sqrt(bag$th_hat2_mean)),
@@ -1019,7 +951,6 @@ shinyServer(function(input, output, session){
 
   # plot elicited prior -- variance for normal (unknown var) case
   output$prior_plot_normal_var <- renderPlot({
-
     p_plot_var <- ggplot(data = bag$selected_keep_normal_var, aes(x = selected_param)) +
       stat_function(fun = dinvgamma, geom = "area", n = 1e5,
         args = list(shape = bag$th_hat1_var, rate = bag$th_hat2_var),
@@ -1040,17 +971,14 @@ shinyServer(function(input, output, session){
  
   # allow user to find probability for specific interval
   findProb <- eventReactive(input$interval_prob, {
-  	
   	if (input$data_model == "Bernoulli") {
   		prior_prob <- round(pbeta(input$upper_prob, bag$th_hat1, bag$th_hat2) 
         - pbeta(input$lower_prob, bag$th_hat1, bag$th_hat2), 4
   		)
-  	
   	} else if (input$data_model == "Poisson") {
   		prior_prob <- round(pgamma(input$upper_prob, bag$th_hat1, bag$th_hat2)
         - pgamma(input$lower_prob, bag$th_hat1, bag$th_hat2), 4
   		)
-  		
   	} else if (input$data_model == "Normal (known variance)") {
   		prior_prob <- round(pnorm(input$upper_prob, bag$th_hat1, sqrt(bag$th_hat2))
 				- pnorm(input$lower_prob, bag$th_hat1, sqrt(bag$th_hat2)), 4
@@ -1069,7 +997,6 @@ shinyServer(function(input, output, session){
   
   # make history plot of parameters at each step
   output$history_plot <- renderPlot({
-    
   	h_plot <- ggplot() +
 			geom_point(data = bag$store_mesh, aes(x = step, y = intervals, size = 0.7)) + 
 			geom_point(data = bag$store_all_selected, 
@@ -1091,11 +1018,9 @@ shinyServer(function(input, output, session){
   	if (input$data_model == "Bernoulli") {
   		h_plot <- h_plot + ylab("p") + 
   			ggtitle("Red:    Selected proportion\nBlack:  Unselected proportion")
-  		
   	} else if (input$data_model == "Poisson") {
   		h_plot <- h_plot + ylab(expression(lambda)) + 
   			ggtitle("Red:    Selected rate\nBlack:  Unselected rate")
-  	
   	} else if (input$data_model == "Normal (known variance)") {
   	  h_plot <- h_plot + ylab(expression(mu)) + 
   	  	ggtitle("Red:    Selected mean\nBlack:  Unselected mean")
@@ -1105,7 +1030,6 @@ shinyServer(function(input, output, session){
   })
   
   output$history_plot_normal_mean <- renderPlot({
-    
   	h_plot_mean <- ggplot() +
 			geom_point(data = bag$store_normal_mean_mesh, 
 			  aes(x = step, y = intervals, size = 0.7)
@@ -1133,7 +1057,6 @@ shinyServer(function(input, output, session){
   })
   
   output$history_plot_normal_var <- renderPlot({
-    
   	h_plot_var <- ggplot() +
 			geom_point(data = bag$store_normal_var_mesh, 
 			  aes(x = step, y = intervals, size = 0.7)
@@ -1162,13 +1085,13 @@ shinyServer(function(input, output, session){
   
   # create report of inputs and results
   output$download_report <- downloadHandler(
-  	filename = function(){
+  	filename = function() {
   		paste("elicitation-results", sep = ".", switch(
   			input$format, PDF = "pdf", HTML = "html", Word = "docx"
   		))
   	},
   	
-  	content = function(file){
+  	content = function(file) {
   		if (input$data_model != "Normal (unknown variance)") markdown_file <- "report.Rmd"
   		else markdown_file <- "report2.Rmd"
   		
@@ -1192,16 +1115,14 @@ shinyServer(function(input, output, session){
   
   # create csv file of selected parameters
   output$download_selected <- downloadHandler(
-  	filename = function(){
+  	filename = function() {
   		paste("elicitation-selected-values", ".csv", sep = "")
   	},
   	
-  	content = function(file){
+  	content = function(file) {
   		if (input$data_model != "Normal (unknown variance)") {
   			all_selected <- data.frame("Selected" = bag$store_all_selected$selected_param)
-  		
   		} else {
-  			
   		  if (length(bag$store_normal_mean_selected$selected_param) == 
   					length(bag$store_normal_var_selected$selected_param)
   		     ) {
@@ -1210,7 +1131,6 @@ shinyServer(function(input, output, session){
   					"Mean" = bag$store_normal_mean_selected$selected_param,
   					"Variance" = bag$store_normal_var_selected$selected_param
   				)
-  				
   			} else {
   				all_selected <- data.frame(
   				"Mean" = bag$store_normal_mean_selected$selected_param,

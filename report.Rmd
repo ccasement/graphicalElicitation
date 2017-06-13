@@ -9,26 +9,23 @@ knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 2.8, comment = "
 ```
 
 
-
-
 <!--- user inputs -->
 ## User Inputs
 ```{r}
-if(input$data_model == "Bernoulli" || input$data_model == "Poisson"){
-	inputs <- data.frame("." = c(input$data_model, bag$n),
-	                     row.names = c("Data Model", "Observations  ")
+if(input$data_model == "Bernoulli" || input$data_model == "Poisson") {
+	inputs <- data.frame(
+	  "." = c(input$data_model, bag$n),
+	  row.names = c("Data Model", "Observations  ")
 	)
-}
-if(input$data_model == "Normal (known variance)"){
-	inputs <- data.frame("." = c(input$data_model, bag$n, input$pop_sd),
-	                     row.names = c("Data Model", "Observations", "Population Std. Dev.")
+} else if(input$data_model == "Normal (known variance)") {
+	inputs <- data.frame(
+	  "." = c(input$data_model, bag$n, input$pop_sd),
+	  row.names = c("Data Model", "Observations", "Population Std. Dev.")
 	)
 }
 cat(capture.output(inputs)[-1], sep = "\n")
 invisible(inputs)
 ```
-
-
 
 
 <!--- elicited prior information -->
@@ -39,13 +36,11 @@ invisible(inputs)
 cat(bag$prior_fam, sep = "\n")
 ```
 
-
 ### Parameters
 ```{r}
 cat(capture.output(bag$hyper_params)[-1], sep = "\n")
 invisible(bag$hyper_params)
 ```
-
 
 ### Plot
 ```{r}
@@ -57,14 +52,11 @@ bag$p_plot +
 	)
 ```
 
-
 ### Summaries
 ```{r}
 cat(capture.output(bag$summaries)[-1], sep = "\n")
 invisible(bag$summaries)
 ```
-
-
 
 
 <!--- number of selections and history plot -->
@@ -75,7 +67,6 @@ invisible(bag$summaries)
 cat(capture.output(bag$n_selections)[-1], sep = "\n")
 invisible(bag$n_selections)
 ```
-
 
 ### History Plot
 ```{r}
@@ -111,6 +102,4 @@ if(input$data_model == "Normal (known variance)"){
 
 return(h_plot)
 ```
-
-
 

@@ -9,8 +9,6 @@ knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 2.8, comment = "
 ```
 
 
-
-
 <!--- user inputs -->
 ## User Inputs
 ```{r}
@@ -22,8 +20,6 @@ invisible(inputs)
 ```
 
 
-
-
 <!--- elicited prior information -->
 
 <!--- joint prior -->
@@ -33,7 +29,6 @@ invisible(inputs)
 ```{r}
 cat("Normal-Inverse-Gamma", sep = "\n")
 ```
-
 
 ### Parameters
 ```{r}
@@ -50,7 +45,6 @@ invisible(bag$hyper_params_joint)
 cat("Normal", sep = "\n")
 ```
 
-
 ### Parameters
 ```{r}
 cat(capture.output(bag$hyper_params_mean)[-1], sep = "\n")
@@ -58,18 +52,20 @@ invisible(bag$hyper_params_mean)
 ```
 Note: (Sigma^2)* = Mode of Inverse-Gamma prior on Sigma^2
 
-
 ### Summaries
 ```{r}
 cat(capture.output(bag$summaries_mean)[-1], sep = "\n")
 invisible(bag$summaries_mean)
 ```
 
-
 ### Plot
 ```{r}
-bag$p_plot_mean + theme(plot.title = element_text(size = 11),
-	axis.title = element_text(size = 11), axis.text = element_text(size = 10))
+bag$p_plot_mean + 
+  theme(
+    plot.title = element_text(size = 11),
+	  axis.title = element_text(size = 11), 
+    axis.text = element_text(size = 10)
+  )
 ```
 
 
@@ -87,18 +83,20 @@ cat(capture.output(bag$hyper_params_var)[-1], sep = "\n")
 invisible(bag$hyper_params_var)
 ```
 
-
 ### Summaries
 ```{r}
 cat(capture.output(bag$summaries_var)[-1], sep = "\n")
 invisible(bag$summaries_var)
 ```
 
-
 ### Plot
 ```{r}
-bag$p_plot_var + theme(plot.title = element_text(size = 11),
-	axis.title = element_text(size = 11), axis.text = element_text(size = 10))
+bag$p_plot_var + 
+  theme(
+    plot.title = element_text(size = 11),
+	  axis.title = element_text(size = 11), 
+    axis.text = element_text(size = 10)
+  )
 ```
 
 
@@ -117,7 +115,6 @@ cat(capture.output(bag$n_var_selections)[-1], sep = "\n")
 invisible(bag$n_var_selections)
 ```
 
-
 ### History Plots
 ```{r}
 ggplot() +
@@ -130,11 +127,13 @@ ggplot() +
 		by = 10)) +
 	labs(x = "Selection Number", y = expression(mu), 
 		title = "Red:    Selected parameter\nBlack:  Unselected parameter") +
-	theme(plot.title = element_text(size = 11, hjust = 0), 
+	theme(
+	  plot.title = element_text(size = 11, hjust = 0), 
 		axis.title.x = element_text(size = 11, margin = margin(15, 0, 0, 0)), 
     axis.title.y = element_text(size = 11, margin = margin(0, 10, 0, 0)),
 		axis.text = element_text(size = 10), 
-		legend.position = "none")
+		legend.position = "none"
+	)
 
 ggplot() +
 	geom_point(data = bag$store_normal_var_mesh, aes(x = step, y = intervals)) + 
@@ -146,11 +145,13 @@ ggplot() +
 		by = 10)) +
 	labs(x = "Selection Number", y = expression(sigma^2), 
 		title = "Red:    Selected parameter\nBlack:  Unselected parameter") +
-	theme(plot.title = element_text(size = 11, hjust = 0), 
+	theme(
+	  plot.title = element_text(size = 11, hjust = 0), 
 		axis.title.x = element_text(size = 11, margin = margin(15, 0, 0, 0)), 
     axis.title.y = element_text(size = 11, margin = margin(0, 10, 0, 0)),
 		axis.text = element_text(size = 10), 
-		legend.position = "none")
+		legend.position = "none"
+	)
 ```
 
 
