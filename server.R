@@ -1,9 +1,7 @@
 
 library(shiny)
 library(ggplot2); theme_set(theme_bw(18))
-library(scales)
 library(plyr)
-library(tidyr)
 library(invgamma)
 library(rmarkdown)
 
@@ -204,7 +202,7 @@ shinyServer(function(input, output, session) {
 		})
 		
 		if (input$data_model == "Bernoulli") {
-  	  training_datasets <- lapply(seq_along(samples), function(samples){
+  	  training_datasets <- lapply(seq_along(samples), function(samples) {
   	    data.frame(x = rbinom(bag$N, 1, input$training_successes / bag$N), 
   	      samp = samples, stringsAsFactors = FALSE
   	    )
@@ -216,7 +214,7 @@ shinyServer(function(input, output, session) {
   			facet_wrap(~ samp) + 
   			scale_x_discrete("", breaks = 0:1, labels = c("Failure", "Success"))
   	} else if (input$data_model == "Poisson") {
-  	  training_datasets <- lapply(seq_along(samples), function(samples){
+  	  training_datasets <- lapply(seq_along(samples), function(samples) {
   	    data.frame(x = rpois(bag$N, input$training_rate), samp = samples, 
   	      stringsAsFactors = FALSE
   	    )
@@ -228,7 +226,7 @@ shinyServer(function(input, output, session) {
     		facet_wrap(~ samp) +
       	scale_x_continuous("Number of Occurrences")
   	} else if (input$data_model == "Normal (known variance)") {
-  	  training_datasets <- lapply(seq_along(samples), function(samples){
+  	  training_datasets <- lapply(seq_along(samples), function(samples) {
       	data.frame(x = rnorm(bag$N, input$training_mean1, input$training_sd1), 
       	  samp = samples, stringsAsFactors = FALSE
       	)
@@ -376,7 +374,7 @@ shinyServer(function(input, output, session) {
 	  bag$init_rng <- function(N, th) rbinom(N, 1, th)
 	  
 	  # randomly generate datasets
-	  list_of_datasets <- lapply(bag$param_mesh, function(th){
+	  list_of_datasets <- lapply(bag$param_mesh, function(th) {
 	    data.frame(x = bag$init_rng(bag$N, th), param = th)
 	  })
 	  

@@ -649,7 +649,6 @@ navbarPage("Graphical Elicitation",
         the 'Select Model' tab."),
       p("(3) Change Warm-up: allows you to change the warm-up value (the number
         of selections discarded before fitting the prior)."),
-      # NEED TO CHECK THIS -- what's programmed currently? warmup or number discarded? **************
       p("(4) Change Plot: allows you to change the x-axis values for the density 
         plot."),
       hr()
