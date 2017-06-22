@@ -265,8 +265,8 @@ shinyServer(function(input, output, session) {
 	  
 	  # bernoulli case
 	  if (input$data_model == "Bernoulli") {
-	    logit_l <- logistic(selected) - bag$w_link * bag$multiplier^bag$counter / 2
-	    logit_u <- logistic(selected) + bag$w_link * bag$multiplier^bag$counter / 2
+	    logit_l <- logistic(selected) - (logistic(selected) - logistic(min(interval))) * bag$multiplier
+	    logit_u <- logistic(selected) + (logistic(max(interval)) - logistic(selected)) * bag$multiplier
 	    param_l <- expit(logit_l)
 	    param_u <- expit(logit_u)
 	    bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
