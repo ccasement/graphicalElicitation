@@ -265,14 +265,14 @@ shinyServer(function(input, output, session) {
 	  
 	  # bernoulli case
 	  if (input$data_model == "Bernoulli") {
-	    logit_l <- logistic(selected) - (logistic(selected) - logistic(min(interval))) * bag$multiplier
-	    logit_u <- logistic(selected) + (logistic(max(interval)) - logistic(selected)) * bag$multiplier
+	    logit_l <- logistic(selected) - bag$w_link * bag$multiplier^bag$counter / 2
+	    logit_u <- logistic(selected) + bag$w_link * bag$multiplier^bag$counter / 2
 	    param_l <- expit(logit_l)
 	    param_u <- expit(logit_u)
 	    bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
 	  } else if (input$data_model == "Poisson") {
-	    log_l <- log(selected) - (log(selected) - log(min(interval))) * bag$multiplier
-	    log_u <- log(selected) + (log(max(interval)) - log(selected)) * bag$multiplier
+	    log_l <- log(selected) - bag$w_link * bag$multiplier^bag$counter / 2
+	    log_u <- log(selected) + bag$w_link * bag$multiplier^bag$counter / 2
 	    param_l <- exp(log_l)
 	    param_u <- exp(log_u)
 	    bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
@@ -288,8 +288,8 @@ shinyServer(function(input, output, session) {
 	      bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
 	      bag$normal_mean_mesh <<- bag$param_mesh
 	    } else {
-	      log_l <- log(selected) - (log(selected) - log(min(interval))) * bag$multiplier
-	      log_u <- log(selected) + (log(max(interval)) - log(selected)) * bag$multiplier
+	      log_l <- log(selected) - bag$w_link_var * bag$multiplier^bag$var_counter / 2
+	      log_u <- log(selected) + bag$w_link_var * bag$multiplier^bag$var_counter / 2
 	      param_l <- exp(log_l)
 	      param_u <- exp(log_u)
 	      bag$param_mesh <<- seq(param_l, param_u, length.out = n_frames)
@@ -470,6 +470,7 @@ shinyServer(function(input, output, session) {
 	    high_init_var <- 4 * bag$est_sd^2
 	    bag$normal_var_mesh <- seq(low_init_var, high_init_var, length.out = n_frames)
 	    bag$w_param_var <- high_init_var - low_init_var
+	    bag$w_link_var <- log(high_init_var) - log(low_init_var)
 	    
 	    # multiplier for shrinking interval width
 	    bag$multiplier <- 0.85
